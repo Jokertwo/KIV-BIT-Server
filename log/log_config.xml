@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+
+    <Properties>
+        <Property name="separator">${sys:line.separator}</Property>
+        <Property name="patern">[%-4level - %c{1}.%M()] - %msg${separator}</Property>
+        <Property name="path">log/</Property>
+        <Property name="fileName1">${path}oks-01-log-info.txt</Property>
+        <Property name="fileName2">${path}oks-01-log-debug.txt</Property>
+        <Property name="fileName3">${path}oks-01-log-trace.txt</Property>
+    </Properties>
+    <Appenders>
+        <Console name="obrazovka" target="SYSTEM_OUT">
+            <PatternLayout pattern="${patern}" />
+        </Console>
+
+
+    </Appenders>
+    <Loggers>
+
+        <Root level="ALL">
+            <AppenderRef ref="obrazovka" />
+        </Root>
+
+
+    </Loggers>
+</Configuration>

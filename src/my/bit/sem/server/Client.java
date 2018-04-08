@@ -4,4 +4,8 @@ public interface Client {
 
     
     void disconect();
+    
+    String getCliName();
+    
+    String getConTime();
 }

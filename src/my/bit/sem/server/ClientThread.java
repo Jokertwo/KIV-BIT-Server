@@ -5,8 +5,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Date;
-import my.bit.sem.message.KindOfM;
+import my.bit.sem.key.Key;
 import my.bit.sem.message.Message;
+import my.bit.sem.rsa.RSA;
 
 
 public class ClientThread extends Thread implements Client {
@@ -18,10 +19,14 @@ public class ClientThread extends Thread implements Client {
 
     private String date;
     private boolean run = true;
+    private String name;
+    private RSA rsa;
+    private Key clientPublicKey;
 
 
-    public ClientThread(Socket socket) {
+    public ClientThread(Socket socket, RSA rsa) {
         this.socket = socket;
+        this.rsa = rsa;
         try {
             sOutput = new ObjectOutputStream(socket.getOutputStream());
             sInput = new ObjectInputStream(socket.getInputStream());
@@ -30,7 +35,22 @@ public class ClientThread extends Thread implements Client {
             return;
         }
         date = new Date().toString() + "\n";
-        System.out.println(date);
+        sendPublicKey();
+    }
+
+
+    private void sendPublicKey() {
+        send(Message.PUBLIC_KEY, "", rsa.getPublicKey());
+    }
+
+
+    private void send(int type, String mesage, Key key) {
+        try {
+            sOutput.writeObject(new Message(type, mesage, key));
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
 
@@ -39,21 +59,42 @@ public class ClientThread extends Thread implements Client {
         while (run) {
             try {
                 message = (Message) sInput.readObject();
-                if(message.getType() == KindOfM.LOGOUT.getKind()){
-                    break;
+                switch (message.getType()) {
+                    case (Message.LOGOUT):
+                        close();
+                        break;
+                    case (Message.LOGIN):
+                        clientPublicKey = message.getKey();
+                        name = new String(rsa.decription(message.getMessage()).toByteArray());
+                        break;
+                    case (Message.MESSAGE):
+                        String temp = new String(rsa.decription(message.getMessage()).toByteArray());
+                        send(Message.MESSAGE,
+                            new String(rsa.encryption(temp, clientPublicKey).toByteArray()), null);
+                        break;
+
                 }
+
                 sOutput.writeObject(message);
-            } catch (IOException | ClassNotFoundException e ) {
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
                 run = false;
+                disconect();
             }
         }
-        disconect();
+
     }
 
 
     @Override
-    public void disconect() {        
+    public void disconect() {
+        try {
+            sOutput.writeObject(new Message(Message.LOGOUT,
+                new String(rsa.encryption("test", clientPublicKey).toByteArray()), null));
+        } catch (NullPointerException | IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         close();
     }
 
@@ -72,5 +113,17 @@ public class ClientThread extends Thread implements Client {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+
+    @Override
+    public String getCliName() {
+        return name;
+    }
+
+
+    @Override
+    public String getConTime() {
+        return date;
     }
 }
