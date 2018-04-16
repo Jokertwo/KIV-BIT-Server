@@ -4,18 +4,22 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Date;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import my.bit.sem.key.Key;
 import my.bit.sem.message.Message;
+import my.bit.sem.message.MessageType;
 import my.bit.sem.rsa.RSA;
 
 
 public class ClientThread extends Thread implements Client {
+    public static final Logger logger = LogManager.getLogger();
+    private Socket socket;
 
-    Socket socket;
-    ObjectInputStream sInput;
-    ObjectOutputStream sOutput;
-    private Message message;
+    private ObjectInputStream sInput;
+    private ObjectOutputStream sOutput;
 
     private String date;
     private boolean run = true;
@@ -40,13 +44,13 @@ public class ClientThread extends Thread implements Client {
 
 
     private void sendPublicKey() {
-        send(Message.PUBLIC_KEY, "", rsa.getPublicKey());
+        send(MessageType.PUBLIC_KEY, "", rsa.getPublicKey());
     }
 
 
-    private void send(int type, String mesage, Key key) {
+    private void send(MessageType type, String mesage, Key key) {
         try {
-            sOutput.writeObject(new Message(type, mesage, key));
+            sOutput.writeObject(new Message(mesage, key, type));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -58,26 +62,31 @@ public class ClientThread extends Thread implements Client {
     public void run() {
         while (run) {
             try {
-                message = (Message) sInput.readObject();
+                Message message = (Message) sInput.readObject();
                 switch (message.getType()) {
-                    case (Message.LOGOUT):
+                    case LOGOUT:
+                        logger.info("Client " + socket.toString() + "' logOut from server");
                         close();
                         break;
-                    case (Message.LOGIN):
+                    case LOGIN:
                         clientPublicKey = message.getKey();
                         name = new String(rsa.decription(message.getMessage()).toByteArray());
+                        logger.info("Client " + socket.toString() + "' logIn from server");
                         break;
-                    case (Message.MESSAGE):
+                    case MESSAGE:
+                        logger.trace("Recieve message from clinet " + socket.toString() + "'");
                         String temp = new String(rsa.decription(message.getMessage()).toByteArray());
-                        send(Message.MESSAGE,
+                        send(MessageType.MESSAGE,
                             new String(rsa.encryption(temp, clientPublicKey).toByteArray()), null);
+                        break;
+                    default:
                         break;
 
                 }
 
                 sOutput.writeObject(message);
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
+            } catch ( ClassNotFoundException | IOException e) {
+
                 run = false;
                 disconect();
             }
@@ -89,8 +98,8 @@ public class ClientThread extends Thread implements Client {
     @Override
     public void disconect() {
         try {
-            sOutput.writeObject(new Message(Message.LOGOUT,
-                new String(rsa.encryption("test", clientPublicKey).toByteArray()), null));
+            sOutput.writeObject(new Message(new String(rsa.encryption("test", clientPublicKey).toByteArray()), null,
+                MessageType.LOGOUT));
         } catch (NullPointerException | IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
