@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +22,6 @@ public class ClientThread extends Thread implements Client {
 
     private String date;
     private boolean run = true;
-    private String name;
     private RSA rsa;
     private Key clientPublicKey;
 
@@ -52,8 +50,7 @@ public class ClientThread extends Thread implements Client {
         try {
             sOutput.writeObject(new Message(mesage, key, type));
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.error("Error dusing send message to client",e);
         }
     }
 
@@ -67,10 +64,9 @@ public class ClientThread extends Thread implements Client {
                     case LOGOUT:
                         logger.info("Client " + socket.toString() + "' logOut from server");
                         close();
-                        break;
+                        return;
                     case LOGIN:
                         clientPublicKey = message.getKey();
-                        name = new String(rsa.decription(message.getMessage()).toByteArray());
                         logger.info("Client " + socket.toString() + "' logIn from server");
                         break;
                     case MESSAGE:
@@ -86,7 +82,7 @@ public class ClientThread extends Thread implements Client {
 
                 sOutput.writeObject(message);
             } catch ( ClassNotFoundException | IOException e) {
-
+                logger.error("Error during recieve message.",e);
                 run = false;
                 disconect();
             }
@@ -125,12 +121,7 @@ public class ClientThread extends Thread implements Client {
     }
 
 
-    @Override
-    public String getCliName() {
-        return name;
-    }
-
-
+    
     @Override
     public String getConTime() {
         return date;

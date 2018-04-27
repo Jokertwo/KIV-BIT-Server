@@ -24,32 +24,6 @@ public class ServerImpl implements Server {
     }
 
 
-    private void start() {
-        logger.info("Thread for incoming connection starts run");
-        Thread.currentThread().setName("heandler-incoming-connection");
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            while (run) {
-                Socket socket = serverSocket.accept();
-                if (!run) {
-                    break;
-                }
-                logger.trace("Accept new incoming connection on socket :" + socket.toString());
-                ClientThread th = new ClientThread(socket, rsa);
-                
-                listOfClient.add(th);
-                th.start();
-            }
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        for (Client cl : listOfClient) {
-            cl.disconect();
-        }
-    }
-
-
     @Override
     public void stop() {
         run = false;
@@ -58,7 +32,30 @@ public class ServerImpl implements Server {
 
     @Override
     public void run() {
-        start();
+        logger.debug("Thread for incoming connection starts run");
+        Thread.currentThread().setName("heandler-incoming-connection");
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            logger.info("Start listen on port: " + port);
+            while (run) {
+                Socket socket = serverSocket.accept();
+                if (!run) {
+                    break;
+                }
+                logger.trace("Accept new incoming connection on socket :" + socket.toString());
+                ClientThread th = new ClientThread(socket, rsa);
+
+                listOfClient.add(th);
+                th.start();
+            }
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        logger.info("Disconnect all client");
+        for (Client cl : listOfClient) {
+            cl.disconect();
+        }
     }
 
 

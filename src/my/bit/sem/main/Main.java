@@ -1,8 +1,10 @@
 package my.bit.sem.main;
 
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import my.bit.sem.gui.LogInfo;
 import my.bit.sem.gui.Window;
 import my.bit.sem.pm.PrimeNumbersE;
 import my.bit.sem.rsa.RSAImpl;
@@ -22,9 +24,10 @@ public class Main {
     
     
     public static void main(String[] args) {
+        JPanel logInfo = new LogInfo();
         logger.info("Start server application");
         Server server = new ServerImpl(new RSAImpl(PrimeNumbersE.pN3.getPn(), PrimeNumbersE.pN6.getPn()));
         ServerControler sCtrl = new ServerControlerImpl(server);
-        SwingUtilities.invokeLater(() -> new Window(sCtrl));
+        SwingUtilities.invokeLater(() -> new Window(sCtrl,logInfo));
     }
 }
