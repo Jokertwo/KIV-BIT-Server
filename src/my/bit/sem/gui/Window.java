@@ -8,6 +8,8 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.text.PlainDocument;
+import my.bit.sem.intFilter.IntFilter;
 import my.bit.sem.server.ServerControler;
 import net.miginfocom.swing.MigLayout;
 
@@ -22,17 +24,17 @@ public class Window extends JFrame {
     private JTextField tf;
 
 
-    public Window(ServerControler sCtrl,JPanel loginfo) {
+    public Window(ServerControler sCtrl, JPanel loginfo) {
         super();
         this.sCtrl = sCtrl;
 
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new MigLayout());
-        add(loginfo,"grow,push,wrap");
+        add(loginfo, "grow,push,wrap");
         add(port(), "growx,pushx,wrap");
         add(run(), "growx,pushx,split");
-        add(stop(), "growx,pushx");
+//        add(stop(), "growx,pushx");
         setPreferredSize(new Dimension(500, 400));
         pack();
         setVisible(true);
@@ -40,9 +42,16 @@ public class Window extends JFrame {
     }
 
 
+    /**
+     * Create textfile for insert port
+     * 
+     * @return
+     */
     private JTextField port() {
         tf = new JTextField();
         tf.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 25));
+        PlainDocument doc = (PlainDocument) tf.getDocument();
+        doc.setDocumentFilter(new IntFilter());
         return tf;
     }
 

@@ -7,9 +7,11 @@ import java.net.Socket;
 import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import my.bit.sem.activity.Production;
 import my.bit.sem.key.Key;
 import my.bit.sem.message.Message;
 import my.bit.sem.message.MessageType;
+import my.bit.sem.message.Operation;
 import my.bit.sem.rsa.RSA;
 
 
@@ -24,11 +26,13 @@ public class ClientThread extends Thread implements Client {
     private boolean run = true;
     private RSA rsa;
     private Key clientPublicKey;
+    private Production production;
 
 
-    public ClientThread(Socket socket, RSA rsa) {
+    public ClientThread(Socket socket, RSA rsa, Production production) {
         this.socket = socket;
         this.rsa = rsa;
+        this.production = production;
         try {
             sOutput = new ObjectOutputStream(socket.getOutputStream());
             sInput = new ObjectInputStream(socket.getInputStream());
@@ -42,7 +46,7 @@ public class ClientThread extends Thread implements Client {
 
 
     private void sendPublicKey() {
-        Message message = new Message("", rsa.getPublicKey(), MessageType.PUBLIC_KEY);
+        Message message = new Message(null, rsa.getPublicKey(), MessageType.PUBLIC_KEY, null);
         try {
             sOutput.writeObject(message);
         } catch (IOException e) {
@@ -67,12 +71,13 @@ public class ClientThread extends Thread implements Client {
                         break;
                     case MESSAGE:
                         logger.trace("Recieve message from clinet " + socket.toString() + "'");
-                        logger.debug("Undecoded  message: " + message.getMessage());
+                        logger.trace("Undecoded  message: " + message.getMessage());
                         String temp = new String(rsa.decription(message.getMessage()).toByteArray());
                         logger.debug("Decoded message: " + temp);
+                        temp = production.procces(temp, message.getOperation());
                         temp = new String(rsa.encryption(temp, clientPublicKey).toString());
 
-                        Message newMessage = new Message(temp, null, MessageType.MESSAGE);
+                        Message newMessage = new Message(temp, null, MessageType.MESSAGE, Operation.PLUS);
                         sOutput.writeObject(newMessage);
                         break;
                     default:
@@ -93,8 +98,8 @@ public class ClientThread extends Thread implements Client {
     @Override
     public void disconect() {
         try {
-            sOutput.writeObject(new Message(new String(rsa.encryption("test", clientPublicKey).toByteArray()), null,
-                MessageType.LOGOUT));
+            sOutput.writeObject(new Message(null, null,
+                MessageType.LOGOUT, null));
         } catch (NullPointerException | IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

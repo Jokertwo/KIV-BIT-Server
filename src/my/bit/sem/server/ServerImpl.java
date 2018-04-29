@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import my.bit.sem.activity.Production;
+import my.bit.sem.activity.ProductionCounter;
 import my.bit.sem.rsa.RSA;
 
 
@@ -16,11 +18,13 @@ public class ServerImpl implements Server {
     private List<Client> listOfClient;
     private int port;
     private RSA rsa;
+    private Production production;
 
 
     public ServerImpl(RSA rsa) {
         this.rsa = rsa;
         listOfClient = new LinkedList<>();
+        production = new ProductionCounter();
     }
 
 
@@ -42,7 +46,7 @@ public class ServerImpl implements Server {
                     break;
                 }
                 logger.trace("Accept new incoming connection on socket :" + socket.toString());
-                ClientThread th = new ClientThread(socket, rsa);
+                ClientThread th = new ClientThread(socket, rsa, production);
 
                 listOfClient.add(th);
                 th.start();
