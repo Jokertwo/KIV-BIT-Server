@@ -42,15 +42,11 @@ public class ClientThread extends Thread implements Client {
 
 
     private void sendPublicKey() {
-        send(MessageType.PUBLIC_KEY, "", rsa.getPublicKey());
-    }
-
-
-    private void send(MessageType type, String mesage, Key key) {
+        Message message = new Message("", rsa.getPublicKey(), MessageType.PUBLIC_KEY);
         try {
-            sOutput.writeObject(new Message(mesage, key, type));
+            sOutput.writeObject(message);
         } catch (IOException e) {
-            logger.error("Error dusing send message to client",e);
+            logger.error(e);
         }
     }
 
@@ -71,18 +67,21 @@ public class ClientThread extends Thread implements Client {
                         break;
                     case MESSAGE:
                         logger.trace("Recieve message from clinet " + socket.toString() + "'");
+                        logger.debug("Undecoded  message: " + message.getMessage());
                         String temp = new String(rsa.decription(message.getMessage()).toByteArray());
-                        send(MessageType.MESSAGE,
-                            new String(rsa.encryption(temp, clientPublicKey).toByteArray()), null);
+                        logger.debug("Decoded message: " + temp);
+                        temp = new String(rsa.encryption(temp, clientPublicKey).toString());
+
+                        Message newMessage = new Message(temp, null, MessageType.MESSAGE);
+                        sOutput.writeObject(newMessage);
                         break;
                     default:
                         break;
 
                 }
 
-                sOutput.writeObject(message);
-            } catch ( ClassNotFoundException | IOException e) {
-                logger.error("Error during recieve message.",e);
+            } catch (ClassNotFoundException | IOException e) {
+                logger.error("Error during recieve message.", e);
                 run = false;
                 disconect();
             }
@@ -121,7 +120,6 @@ public class ClientThread extends Thread implements Client {
     }
 
 
-    
     @Override
     public String getConTime() {
         return date;

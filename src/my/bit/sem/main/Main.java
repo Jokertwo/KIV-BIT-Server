@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import my.bit.sem.gui.LogInfo;
 import my.bit.sem.gui.Window;
-import my.bit.sem.pm.PrimeNumbersE;
 import my.bit.sem.rsa.RSAImpl;
 import my.bit.sem.server.Server;
 import my.bit.sem.server.ServerControler;
@@ -26,7 +25,7 @@ public class Main {
     public static void main(String[] args) {
         JPanel logInfo = new LogInfo();
         logger.info("Start server application");
-        Server server = new ServerImpl(new RSAImpl(PrimeNumbersE.pN3.getPn(), PrimeNumbersE.pN6.getPn()));
+        Server server = new ServerImpl(new RSAImpl());
         ServerControler sCtrl = new ServerControlerImpl(server);
         SwingUtilities.invokeLater(() -> new Window(sCtrl,logInfo));
     }
